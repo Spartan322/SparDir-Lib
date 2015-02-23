@@ -5,43 +5,78 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 
 #define SDIR_VERSION "1.0.0"
 
-//TODO: place in cpp file
-#ifdef _WIN32
-  #define _SDIR_OS_USE_ 1
-  #include	<io.h> // for _access on windows
-  #include	<Shlobj.h>
-  #include	<Shlwapi.h>
-  #pragma comment(lib,"Shlwapi.lib") // instruct visual studio to link the library
-  #include	<tchar.h>
-  #include	<sys/types.h>
-  #include	<sys/stat.h>
-#elif defined(__APPLE__) || defined(__unix__)
-  #define _SDOR_OS_USE_ 2
-  #include <unistd.h> // for access on unix, mac
-// Start Alternates to Win32 and Unix/OSX
-#elif _UNDEFINED_OS
-  #define _SDIR_OS_USE_ 3
-  // And/Or more then 3 for more Operating systems
-// End ALternates to Win32 and Unix/OSX
-#endif
-
 namespace SDir
 {
+  typedef Buffer std::string;
+  typedef BufPos std::streampos;
+  
+  class Directory;
+  
   class Library
   {
-    Library();
+    Directory working_dir;
+    
+    Library(std::string working_loc = "");
   public:
     std::string getVersion() { return SDIR_VERSION; }
+    
+    Directory getWorkingDirectory() { return working_dir; }
   } lib();
+  
+  class File
+  {
+    friend class Directory;
+    
+    BufPos ppos;
+    BufPos gpos;
+    
+    Directory parent;
+    std::string name;
+    
+    File(Directory parent, std::string name);
+  public:
+    Buffer      read(bool binary = false, BufPos readAmount = -1);
+    void        write(Buffer buffer, binary = false);
+    void        seekg(BufPos pos);
+    BufPos      tellg();
+    void        seekp(BufPos pos);
+    BufPos      tellp();
+    std::string extension();  //gets the extension eg:.zip, .obj, .txt
+    std::string name();       //gets the file name excluding the extension eg:zipfile, objectfile, textfile
+    std::string fullname();   //gets the file name with extension eg:zipfile.zip. objectfile.obj, textfile.txt
+    std::string absname();    //returns the file's location, name, and extension eg:C:\Windows\Users\Desktop\zipfile.zip
+    bool        destroy();    //destroys/deletes the object
+  };
   
   class Directory
   {
-    std::string location;
+    Directory parent;
+    std::string name;
+    
+    std::vector<File> cache;
+    
+    bool createDirectory();
+    bool removeDirectory();
+    bool doesDirectoryExist();
   public:
     Directory(std::string location);
+    Directory(Directory parent, std::string name);
+    
+    std::string               getName() { return location; }
+    File                      getFile(std::string name);
+    Directory                 getDirectory(std::string name);
+    Directory                 getParent();
+    std::vector<File>         getAllFiles();
+    bool                      doesFileExist(std::string name);
+    std::vector<std::string>  getFileList();
+    std::vector<std::string>  getDirectoryList();
+    bool                      moveFile(Directory newDir, File file);
+    bool                      moveDirectory(Directory newDir, Directory dir);
+    void                      destroy(); //destroy/deletes the object
   };
 }
 
