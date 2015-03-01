@@ -1,3 +1,0 @@
-[submodule "deps/cubsoft/utf-8"]
-  path = deps/cubsoft/utf-8
-  url = https://github.com/cubiclesoft/cross-platform-cpp/tree/master/utf8.git
